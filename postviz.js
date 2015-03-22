@@ -10,47 +10,25 @@ var svgns = "http://www.w3.org/2000/svg" ;
 var skymap_width = 100
 var skymap_height = skymap_width * 0.5
 
+var magic_number = 8 ; // has to do with where the image is rendered on the html page...
+
 /*************************************************
                   TEST FUNCTIONS
 *************************************************/
-function foo() {
-	document.getElementById('button').innerHTML = 'ta-da!';
-}
-
-
-function mollweide_foo() {
-        var projection = d3.geo.mollweide()
-		.scale(165)
-		.translate([width / 2, height / 2])
-		.precision(.1);
-
-	var path = d3.geo.path()
-		.projection(projection);
-
-	var graticule = d3.geo.graticule();
-
-	var svg = d3.select("body").append("svg")
-		.attr("width", width)
-		.attr("height", height);
-
-	svg.append("defs").append("path")
-		.datum({type: "Sphere"})
-		.attr("id", "sphere")
-		.attr("d", path);
-
-	return svg
-}
-
 function color_pixel(color, pix) {
-	
-	if (document.getElementById(pix).style.fill == 'rgb(0, 0, 0)') {
-		document.getElementById(pix).style.fill = 'rgb(255,255,255)' ;
+	var dot = document.getElementById(pix) ;	
+	dot.setAttributeNS(null, 'fill', color) ;
+	dot.setAttributeNS(null, 'stroke', color) ;
+/*
+	if (dot.getAttributeNS(null, 'fill') == 'rgb(0, 0, 0)') {
+		dot.setAttributeNS(null, 'fill', 'rgb(255,255,255)') ;
 		document.getElementById('svgbutton').innerHTML = 'find pixel' ;
 	}
 	else {
-		document.getElementById(pix).style.fill = 'rgb(0,0,0)' ;
+		dot.setAttributeNS(null, 'fill', 'rgb(0,0,0)') ;
 		document.getElementById('svgbutton').innerHTML = 'hide pixel' ;
 	}
+*/
 }
 
 /*************************************************
@@ -164,7 +142,7 @@ function create_pixels(pix_params) {
 
 	// parse pix_paras object and fall back to default values if needed
 	var nside = pix_params.nside || 1;
-	var buffer = pix_params.buffer || 50;
+	var buffer = pix_params.buffer || 0;
 	var parent_id = pix_params.parent_id || "skymap";
 	var r = pix_params.r || 1;
 
@@ -182,11 +160,12 @@ function create_pixels(pix_params) {
 	// iterate over pixels and draw one per point
 	var hp = new HEALPix();
 	var npix = nside2npix(nside);
+	var pos_params = {width:width, height:height, projection:projection};
 	for (var pix = 0 ; pix < npix ; pix ++ ) {
 		var iang = hp.pix2ang_ring(nside, pix);
 
 		// re-normalize so this fits within parent svg
-		var pos = pixel_pos(iang, {width:width, height:height, projection:projection} );
+		var pos = pixel_pos(iang, pos_params );
 		var y = buffer + pos[1] ;
 		var x = buffer + pos[0] ;
 
@@ -196,6 +175,7 @@ function create_pixels(pix_params) {
 		dot.setAttributeNS(null, 'cx', x);
 		dot.setAttributeNS(null, 'cy', y);
 		dot.setAttributeNS(null, 'r', r);
+//		dot.setAttributeNS(null, 'stroke', 'rgb(255, 255, 255)');
 		dot.setAttributeNS(null, 'stroke', 'rgb(0, 0, 0)');
 		dot.setAttributeNS(null, 'fill', 'rgb(255, 255, 255)');
 
@@ -203,32 +183,94 @@ function create_pixels(pix_params) {
 		dot.setAttributeNS(null, 'onmouseenter', 'pixel_mouseenter('+pix+', '+par_id+')' );
 		dot.setAttributeNS(null, 'onmouseleave', 'pixel_mouseleave('+par_id+')' );
 
-		parent.appendChild(dot)
+		parent.appendChild(dot);
 	}
+
+	// draw graticule
+	var linestr = "" ;
+	var linecolor = 'rgb(100,100,100)';
+
+	var pos ;
+	var count=0 ;
+	var dtheta = 30;
+	var x;
+	var y;
+	for (var theta=dtheta; theta <= 180; theta+=dtheta) {
+		pos = pixel_pos( [theta*Math.PI/180, 0], pos_params ); 
+		x = buffer + pos[0];
+		y = buffer + pos[1];
+		linestr = x+","+y;
+		pos = pixel_pos( [theta*Math.PI/180, 2*Math.PI], pos_params ); 
+		x = buffer + pos[0];
+		y = buffer + pos[1];
+		linestr += " "+x+","+y;
+
+		var polyline = document.createElementNS(svgns, 'polyline');
+		polyline.setAttributeNS(null, 'id', 'graticule'+count);
+		count ++ ;
+		polyline.setAttributeNS(null, 'points', linestr);
+		polyline.setAttributeNS(null, 'stroke', linecolor);
+
+		parent.appendChild( polyline );
+	}
+
+	var dtheta = 1;
+	var dphi = 45;
+	for (var phi=0; phi <=360; phi+=dphi) {
+		linestr = " " ;
+		for (theta=0 ; theta<=180; theta+=dtheta) {
+	                pos = pixel_pos( [theta*Math.PI/180, phi*Math.PI/180], pos_params ); 
+			x = buffer + pos[0];
+			y = buffer + pos[1];
+        	        linestr += " "+x+","+y;
+		}
+
+                var polyline = document.createElementNS(svgns, 'polyline');
+                polyline.setAttributeNS(null, 'id', 'graticule'+count);
+                count ++ ;
+                polyline.setAttributeNS(null, 'points', linestr);
+                polyline.setAttributeNS(null, 'stroke', linecolor ) ;
+                polyline.setAttributeNS(null, 'fill', 'none' );
+
+                parent.appendChild( polyline );
+	}	
 }
 
 function pixel_click(pix) {
 	var element = document.getElementById(pix) ;
 	var zoom_element = document.getElementById('zoom'+pix) ;
 
-	switch(element.style.fill) {
+	var fill = element.getAttributeNS(null, 'fill');
+
+	switch(fill) {
 		case "rgb(0, 0, 255)":
-			element.style.fill = 'rgb(255, 0, 0)';
-			zoom_element.style.fill = 'rgb(255, 0, 0)';
+			element.setAttributeNS(null, 'fill', 'rgb(255, 0, 0)') ;
+			zoom_element.setAttributeNS(null, 'fill', 'rgb(255, 0, 0)' );
 			break ;
 		case "rgb(0, 255, 0)":
-			element.style.fill = 'rgb(0, 0, 255)';
-			zoom_element.style.fill = 'rgb(0, 0, 255)';
+			element.setAttributeNS(null, 'fill','rgb(0, 0, 255)') ;
+			zoom_element.setAttributeNS(null, 'fill', 'rgb(0, 0, 255)') ;
 			break ;
 		case "rgb(255, 0, 0)":
-			element.style.fill = 'rgb(0, 255, 0)';
-			zoom_element.style.fill = 'rgb(0, 255, 0)';
+			element.setAttributeNS(null, 'fill','rgb(0, 255, 0)') ;
+			zoom_element.setAttributeNS(null, 'fill', 'rgb(0, 255, 0)') ;
 			break ;
 		default:
-			element.style.fill = 'rgb(255, 0, 0)';
-			zoom_element.style.fill = 'rgb(255, 0, 0)';
+			element.setAttributeNS(null, 'fill', 'rgb(255, 0, 0)') ;
+			zoom_element.setAttributeNS(null, 'fill', 'rgb(255, 0, 0)') ;
 	}
-}
+
+	switch(element.style.stroke) {
+		case fill:
+			element.setAttributeNS(null, 'stroke','rgb(0, 0, 0)') ;
+//			zoom_element.setAttributeNS(null, 'stroke','rgb(0, 0, 0)') ;
+			break ;
+		default:
+			var new_fill = element.getAttributeNS(null, 'fill');
+			element.setAttributeNS(null, 'stroke', new_fill)  ;
+//			zoom_element.setAttributeNS(null, 'stroke', new_fill)  ;
+	}
+}		
 
 function pixel_mouseenter( pix, par_element ) {
 	par_element.innerHTML = "pix_id : "+pix;
@@ -242,7 +284,7 @@ function update_zoom( e, pix_params ) {
         // parse pix_params object and fall back to default values if needed
         var zoom_id = pix_params.zoom_id || 'svgzoom' ;
         var nside = pix_params.nside || 1;
-        var buffer = pix_params.buffer || 50;
+        var buffer = pix_params.buffer || 0;
         var parent_id = pix_params.parent_id || "skymap";
         var r = pix_params.r || 1;
 
@@ -256,7 +298,7 @@ function update_zoom( e, pix_params ) {
         var height = parent.height.animVal.value - twobuffer;
 
 	// extract position from client
-	var pos = [(e.clientX-buffer), (e.clientY-buffer)] ;
+	var pos = [e.clientX-buffer-magic_number, e.clientY-buffer-magic_number] ;
 
 	// map into angles
 	var ang = pixel_ang( pos, {width:width, height:height, projection:projection} );
@@ -268,7 +310,7 @@ function update_zoom( e, pix_params ) {
 		
 	}
 	else {
-		document.getElementById('coord').innerHTML = "theta: "+ang[0]+"\n phi  : "+ang[1] ;
+		document.getElementById('coord').innerHTML = "theta: "+ang[0]+" phi  : "+ang[1] ;
 		// update zoom element !
 		render_zoom( ang, pix_params ) ;
 	}
@@ -286,7 +328,7 @@ function render_zoom( ang, pix_params ) {
 	// parser pix_params
 	var zoom_id = pix_params.zoom_id || 'svgzoom' ;
         var nside = pix_params.nside || 1;
-        var buffer = pix_params.buffer || 50;
+        var buffer = pix_params.buffer || 0;
 	var zoom_radius = pix_params.zoom_radius || 10 ;
 
 	var twobuffer = 2*buffer ;
@@ -315,6 +357,9 @@ function render_zoom( ang, pix_params ) {
 		raidus = Math.PI/18 ;
 	}
 
+	// size of dots
+	var dotsize = 0.25 * Math.min(Rx, Ry) / zoom_radius ;
+
         // iterate over pixels
 	var iang;
 	var new_t;
@@ -335,16 +380,16 @@ function render_zoom( ang, pix_params ) {
 			new_p = get_new_p( iang[0], iang[1], t, p, new_t) ;
 
 			// compute new_p
-			x = cx + r*Rx*new_p[0] ;
-			y = cy + r*Ry*new_p[1] ;
+			x = cx + r*Rx*new_p[1] ;
+			y = cy + r*Ry*new_p[0] ;
 	
 			dot = document.createElementNS(svgns, 'circle') ;
 			dot.setAttributeNS(null, 'id', 'zoom'+pix);
 			dot.setAttributeNS(null, 'cx', x);
 			dot.setAttributeNS(null, 'cy', y);
-			dot.setAttributeNS(null, 'r', 3);
-			dot.setAttributeNS(null, 'stroke', 'rgb(0,0,0');
-			fill =  document.getElementById(pix).style.fill ;
+			dot.setAttributeNS(null, 'r', dotsize);
+
+			fill =  document.getElementById(pix).getAttributeNS(null, 'fill') ;
 			if (fill != '' ) {
 				dot.setAttributeNS(null, 'fill', fill );
 			}
@@ -352,9 +397,34 @@ function render_zoom( ang, pix_params ) {
 				dot.setAttributeNS(null, 'fill', 'rgb(255,255,255)');
 			}
 
+			dot.setAttributeNS(null, 'stroke', 'rgb(100,100,100');
+//			dot.setAttributeNS(null, 'stroke', 'rgb(0,0,0');
+
 			zoom.appendChild( dot )
 		}
         }
+
+        // put cross-hairs on zoom
+        // horizontal line
+        var line = document.createElementNS(svgns, 'line');
+        line.setAttributeNS(null, 'id', 'hcrosshair');
+        line.setAttributeNS(null, 'x1', cx-Rx);
+        line.setAttributeNS(null, 'x2', cx+Rx);
+        line.setAttributeNS(null, 'y1', cy);
+        line.setAttributeNS(null, 'y2', cy);
+        line.setAttributeNS(null, 'stroke', 'rgb(0, 0, 0)');
+        zoom.appendChild( line );
+
+        // vertical line
+        var line = document.createElementNS(svgns, 'line');
+        line.setAttributeNS(null, 'id', 'vcrosshair');
+        line.setAttributeNS(null, 'x1', cx);
+        line.setAttributeNS(null, 'x2', cx);
+        line.setAttributeNS(null, 'y1', cy-Ry);
+        line.setAttributeNS(null, 'y2', cy+Ry);
+        line.setAttributeNS(null, 'stroke', 'rgb(0, 0, 0)');
+        zoom.appendChild( line );
+
 }
 
 function dtheta( t1, p1, t2, p2) {
@@ -372,4 +442,52 @@ function get_new_p( t, p, to, po, cosTheta) {
 	y /= norm ;
 
 	return [x, y] ;
+}
+
+function fillin_pixels() {
+
+	npix = sample.length ;
+
+	var color;
+	var p;
+	for (var pix = 0; pix < npix ; pix++) {
+		p = sample[pix] ;
+		if (p == 0) {
+			color = 'rgb(255, 255, 255)' ;
+		}
+		else {
+			color = Math.ceil( 255 *(1 -  Math.pow( p/max, 0.5 ) ) ) ;
+			color = 'rgb(255,'+color+',255)' ;
+		}
+
+		dot = document.getElementById(pix) ; 
+		dot.setAttributeNS(null, 'fill', color) ;
+		dot.setAttributeNS(null, 'stroke', color) ;
+//		dot.setAttributeNS(null, 'stroke', 'rgb(0, 0, 0)') ;
+	}
+}
+
+/*************************************************
+                FITs processing
+*************************************************/
+// Define a callback function for when the FITS file is received
+var callback = function() {
+
+	// Get the first header-dataunit containing a dataunit
+	var hdu = this.getHDU();
+
+	// Get the first header
+	var header = this.getHeader();
+	// or we can do
+	var header = hdu.header;
+
+	// Read a card from the header
+	var bitpix = header.get('BITPIX');
+
+	// Get the dataunit object
+	var dataunit = hdu.data;
+	// or we can do
+	var dataunit = this.getDataUnit();
+
+	// Do some wicked client side processing ...
 }

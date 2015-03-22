@@ -1,8 +1,10 @@
 <html>
 
 <header>
-	<script src="/home/reed/LIGO/viz/postviz/postviz.js"></script>
-	<script src="/home/reed/LIGO/viz/healpix.js/healpix.js"></script>
+	<script src="postviz.js"></script>
+	<script src="../healpix.js/healpix.js"></script>
+	<script src="../fitsjs/lib/fits.js"></script>
+	<script src="nside32.js">//defines global variables...this is not great...</script>
 </header>
 
 <body>
@@ -23,11 +25,39 @@
 		<button id='svgbutton' onclick="color_pixel('rgb(0,0,0)', document.getElementById('numb').value)">find pixel</button>
 	</p>
 
+	<p id='reset pixels'>
+		<button id='reset' onclick="fillin_pixels()">reset pixels</button>
+	</p>
+
 <script>
 
+// read fits file
+/*
+var url;
+//url  = "/home/reed/LIGO/viz/postviz/sample.fits.gz";
+url = "/home/reed/LIGO/viz/postviz/sample.json";
+
+
+// brute force
+var xmlhttp = new XMLHttpRequest();
+xmlhttp.onreadystatechange = function() {
+	if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+		cosole.log( JSON.parse(xmlhttp.responseText) ) ;
+	}
+}
+xmlhttp.open("GET", url, true);
+xmlhttp.send();
+
+// fitsjs
+//var fits = new astro.FITS(url, callback);
+*/
+
+var npix = sample.length ;
+var nside = npix2nside( npix );
+//var nside = Math.pow(2, 5);
+
 // set up parameters for svg skymap
-var buffer = 5;
-var nside = Math.pow(2, 5);
+var buffer = 10;
 var r = 2;
 
 /*
@@ -35,7 +65,7 @@ var pix_params = { nside:nside, buffer:buffer, parent_id:"svgskymap",
 	zoom_id:"svgzoom", r:r, zoom_radius:15 };
 */
 var pix_params = { nside:nside, buffer:buffer, parent_id:"svgskymap", 
-	zoom_id:"svgzoom", r:r, zoom_radius:15, projection:"mollweide" };
+	zoom_id:"svgzoom", r:r, zoom_radius:10, projection:"mollweide" };
 
 // render pixels
 create_pixels(pix_params);
@@ -44,6 +74,9 @@ create_pixels(pix_params);
 element =  document.getElementById('svgskymap') ;
 element.setAttributeNS(null, 'onmousemove', "update_zoom(event, pix_params)" );
 element.setAttributeNS(null, 'onmouseout', "clearCoor()" );
+
+// color pixels
+fillin_pixels(); // uses the global variable "sample" to determine colors!
 
 /*
 need to set up auxiliary plots! 
