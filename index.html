@@ -7,8 +7,8 @@
 
 <body>
 	<p id='skymap'>
-		<svg id="svgskymap" xmlns=svgns width="500" height="300" > </svg>
-		<svg id="svgzoom" xmlns=svgns width="300" height="300"> </svg>
+		<svg id="svgskymap" xmlns=svgns width="1000" height="600" > </svg>
+		<svg id="svgzoom" xmlns=svgns width="600" height="600"> </svg>
 	</p>
 
 	<p id='par1'>
@@ -27,27 +27,33 @@
 
 // set up parameters for svg skymap
 var buffer = 5;
-var nside = Math.pow(2, 4);
+var nside = Math.pow(2, 5);
 var r = 2;
 
 /*
 var pix_params = { nside:nside, buffer:buffer, parent_id:"svgskymap", 
-	zoom_id:"svgzoom", r:r };
+	zoom_id:"svgzoom", r:r, zoom_radius:15 };
 */
 var pix_params = { nside:nside, buffer:buffer, parent_id:"svgskymap", 
-	zoom_id:"svgzoom", r:r, projection:"mollweide", zoom_radius:15 };
+	zoom_id:"svgzoom", r:r, zoom_radius:15, projection:"mollweide" };
 
 // render pixels
 create_pixels(pix_params);
 
 // set up zoom map
-// document.getElementById('svgskymap').onmousemove = "update_zoom(event, svgzoom)" ;
-// document.getElementById('svgskymap').onmouseout = "clearCoor()" ;
-
 element =  document.getElementById('svgskymap') ;
-
 element.setAttributeNS(null, 'onmousemove', "update_zoom(event, pix_params)" );
 element.setAttributeNS(null, 'onmouseout', "clearCoor()" );
+
+/*
+need to set up auxiliary plots! 
+These will depend on the data associated with each pixel...
+Need to figure out how to load/parse data.
+	Expect an array:
+		len(array) = npix -> nside
+		array[:,0] -> probablity of that pixel -> color!
+		array[:,1:] -> figure names that will be loaded? Some sort of posterior samples that will be smoothed?
+*/
 
 </script>
 
