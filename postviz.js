@@ -22,11 +22,11 @@ function color_pixel(color, pix) {
 /*
 	if (dot.getAttributeNS(null, 'fill') == 'rgb(0, 0, 0)') {
 		dot.setAttributeNS(null, 'fill', 'rgb(255,255,255)') ;
-		document.getElementById('svgbutton').innerHTML = 'find pixel' ;
+		document.getElementById('pixel index button').innerHTML = 'find pixel' ;
 	}
 	else {
 		dot.setAttributeNS(null, 'fill', 'rgb(0,0,0)') ;
-		document.getElementById('svgbutton').innerHTML = 'hide pixel' ;
+		document.getElementById('pixel index button').innerHTML = 'hide pixel' ;
 	}
 */
 }
@@ -136,6 +136,12 @@ function nside2npix(nside) {
 
 function npix2nside(npix) {
 	return Math.pow( npix/12, 0.5 )
+}
+
+function find_pixel(ang, nside) {
+	var hp = new HEALPix() ;
+	ang = ang.split(',') ;
+	return hp.ang2pix_ring(nside, ang[0]*Math.PI/180, ang[1]*Math.PI/180) ;
 }
 
 function create_pixels(pix_params) {
@@ -277,7 +283,7 @@ function pixel_mouseenter( pix, par_element ) {
 }
 
 function pixel_mouseleave( par_element ) {
-	par_element.innerHTML = "mouse over a pixel to learn it's pix_id" ;
+	par_element.innerHTML = "mouse over a pixel to get index" ;
 }
 
 function update_zoom( e, pix_params ) {
@@ -304,13 +310,13 @@ function update_zoom( e, pix_params ) {
 	var ang = pixel_ang( pos, {width:width, height:height, projection:projection} );
 
 	if (ang[0] < 0) { // not allowed physically, so we must be out of bounds
-		document.getElementById('coord').innerHTML = "mouse over image to get coords" ;
+		document.getElementById('coord').innerHTML = "mouse over image<br>to get coordinates" ;
 		// clear zoom element ?
 		document.getElementById(zoom_id).innerHTML = "" ;
 		
 	}
 	else {
-		document.getElementById('coord').innerHTML = "theta: "+ang[0]+" phi  : "+ang[1] ;
+		document.getElementById('coord').innerHTML = "theta: "+(ang[0]*180/Math.PI).toFixed(2)+"<br>phi  : "+(ang[1]*180/Math.PI).toFixed(2) ;
 		// update zoom element !
 		render_zoom( ang, pix_params ) ;
 	}
@@ -318,7 +324,7 @@ function update_zoom( e, pix_params ) {
 }
 
 function clearCoor() {
-	document.getElementById('coord').innerHTML = 'mouse over image to get coords' ;
+	document.getElementById('coord').innerHTML = 'mouse over image<br>to get coordinates' ;
 }
 
 function render_zoom( ang, pix_params ) {

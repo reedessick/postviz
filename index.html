@@ -9,20 +9,25 @@
 
 <body>
 	<p id='skymap'>
-		<svg id="svgskymap" xmlns=svgns width="1000" height="600" > </svg>
-		<svg id="svgzoom" xmlns=svgns width="600" height="600"> </svg>
+		<svg id="svgskymap" xmlns=svgns width="800" height="480" > </svg>
+		<svg id="svgzoom" xmlns=svgns width="480" height="480"> </svg>
 	</p>
 
 	<p id='par1'>
-		mouse over a pixel to learn it's pix_id
+		mouse over a pixel to get index
 	</p>
 	<p id='coord'>
-		mouse over image to get coords
+		mouse over image<br>to get coordinates
 	</p>
 
-	<p id='find pixels'>
-		<input id="numb" type="number">
-		<button id='svgbutton' onclick="color_pixel('rgb(0,0,0)', document.getElementById('numb').value)">find pixel</button>
+	<p id='find pixels by index'>
+		<input id="pixel index" type="number">
+		<button id='pixel index button' onclick="color_pixel('rgb(0,0,0)', document.getElementById('pixel index').value)">find pixel by index</button>
+	</p>
+
+	<p id='find pixels by angle'>
+		<input id='pixel angle' type='string'>
+		<button id='pixel angle button' onclick='color_pixel("rgb(0,0,0)", find_pixel(document.getElementById("pixel angle").value, npix2nside(sample.length)) )'>find pixel by angle</button>
 	</p>
 
 	<p id='reset pixels'>
@@ -31,34 +36,21 @@
 
 <script>
 
-// read fits file
-/*
-var url;
-//url  = "/home/reed/LIGO/viz/postviz/sample.fits.gz";
-url = "/home/reed/LIGO/viz/postviz/sample.json";
-
-
-// brute force
-var xmlhttp = new XMLHttpRequest();
-xmlhttp.onreadystatechange = function() {
-	if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-		cosole.log( JSON.parse(xmlhttp.responseText) ) ;
-	}
-}
-xmlhttp.open("GET", url, true);
-xmlhttp.send();
-
-// fitsjs
-//var fits = new astro.FITS(url, callback);
-*/
-
 var npix = sample.length ;
 var nside = npix2nside( npix );
+var pixarea = 4*Math.PI / npix ;
+var angres = Math.pow( pixarea, 0.5 );
 //var nside = Math.pow(2, 5);
 
 // set up parameters for svg skymap
 var buffer = 10;
-var r = 2;
+var twobuffer = 2*buffer
+
+// figure out radius of dots in svgskymap
+//var r = 2;
+var width = document.getElementById('svgskymap').width - twobuffer ;
+var height = document.getElementById('svgskymap').height - twobuffer ;
+var r = 4*Math.min(width*0.5*angres/Math.PI, height*angres/Math.PI) ; // magic numbers come from width, height of svgskymap
 
 /*
 var pix_params = { nside:nside, buffer:buffer, parent_id:"svgskymap", 
