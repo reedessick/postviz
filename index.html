@@ -18,7 +18,10 @@
 		mouse over image to get coords
 	</p>
 
-	<button id='svgbutton' onclick="color_pixel('rgb(0,0,0)', 0)">find pixel 0</button>
+	<p id='find pixels'>
+		<input id="numb" type="number">
+		<button id='svgbutton' onclick="color_pixel('rgb(0,0,0)', document.getElementById('numb').value)">find pixel</button>
+	</p>
 
 <script>
 

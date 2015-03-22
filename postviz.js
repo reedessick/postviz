@@ -42,7 +42,15 @@ function mollweide_foo() {
 }
 
 function color_pixel(color, pix) {
-	document.getElementById(pix).style.fill = color ;
+	
+	if (document.getElementById(pix).style.fill == 'rgb(0, 0, 0)') {
+		document.getElementById(pix).style.fill = 'rgb(255,255,255)' ;
+		document.getElementById('svgbutton').innerHTML = 'find pixel' ;
+	}
+	else {
+		document.getElementById(pix).style.fill = 'rgb(0,0,0)' ;
+		document.getElementById('svgbutton').innerHTML = 'hide pixel' ;
+	}
 }
 
 /*************************************************
