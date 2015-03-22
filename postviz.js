@@ -124,7 +124,7 @@ function pixel_ang(pos, params) {
                 	        return mollweide_ang([fx, fy]) ;
 	       	                break ;
         	       	default:
-		                return [fx*2*Math.PI, fy*Math.PI ];
+		                return [fy*Math.PI, fx*2*Math.PI ];
 		}
         }
 	else {
@@ -145,7 +145,7 @@ function mollweide_ang(pos) {
 	}
 	else {
 		var latitude = Math.asin( (twotheta + Math.sin(twotheta))/Math.PI) ;
-		return [latitude + 0.5*Math.PI, longitude]
+		return [0.5*Math.PI - latitude , longitude]
 	}
 }
 
@@ -154,6 +154,10 @@ function mollweide_ang(pos) {
 ************************/
 function nside2npix(nside) {
 	return 12 * Math.pow( 4 , Math.log(nside)/Math.LN2 )
+}
+
+function npix2nside(npix) {
+	return Math.pow( npix/12, 0.5 )
 }
 
 function create_pixels(pix_params) {
@@ -269,17 +273,6 @@ function update_zoom( e, pix_params ) {
 		render_zoom( ang, pix_params ) ;
 	}
 
-/*
-need to get coordinates of the mouse (over svgskymap) and map this into (theta, phi)
-then, need to get all pixels within "zoom window" of the specified position
-	do this by rotating pixel positions into a new coordinate frame with (theta, phi) as the new north pole
-we plot only those pixels.
-
-Once this is up and running, we should start connecting static png figures with pixels. Then we can update those figures on mouseeneter, mouseleave events.
-
-we should then look at "freezing" the figures when we click on a pixel. 
-Expand upon this to over-lay data based on which pixels have been clicked. When you click on a pixel the second time, it removes the data...
-*/
 }
 
 function clearCoor() {
@@ -317,6 +310,10 @@ function render_zoom( ang, pix_params ) {
 	var angres = Math.pow( pixarea, 0.5 ); 
 
 	var radius = zoom_radius * angres
+
+	if (radius < Math.PI/18) {
+		raidus = Math.PI/18 ;
+	}
 
         // iterate over pixels
 	var iang;
