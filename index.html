@@ -1,0 +1,52 @@
+<html>
+
+<header>
+	<script src="/home/reed/LIGO/viz/postviz/postviz.js"></script>
+	<script src="/home/reed/LIGO/viz/healpix.js/healpix.js"></script>
+</header>
+
+<body>
+	<p id='skymap'>
+		<svg id="svgskymap" xmlns=svgns width="500" height="300" > </svg>
+		<svg id="svgzoom" xmlns=svgns width="300" height="300"> </svg>
+	</p>
+
+	<p id='par1'>
+		mouse over a pixel to learn it's pix_id
+	</p>
+	<p id='coord'>
+		mouse over image to get coords
+	</p>
+
+	<button id='svgbutton' onclick="color_pixel('rgb(0,0,0)', 0)">find pixel 0</button>
+
+<script>
+
+// set up parameters for svg skymap
+var buffer = 5;
+var nside = Math.pow(2, 4);
+var r = 2;
+
+/*
+var pix_params = { nside:nside, buffer:buffer, parent_id:"svgskymap", 
+	zoom_id:"svgzoom", r:r };
+*/
+var pix_params = { nside:nside, buffer:buffer, parent_id:"svgskymap", 
+	zoom_id:"svgzoom", r:r, projection:"mollweide", zoom_radius:15 };
+
+// render pixels
+create_pixels(pix_params);
+
+// set up zoom map
+// document.getElementById('svgskymap').onmousemove = "update_zoom(event, svgzoom)" ;
+// document.getElementById('svgskymap').onmouseout = "clearCoor()" ;
+
+element =  document.getElementById('svgskymap') ;
+
+element.setAttributeNS(null, 'onmousemove', "update_zoom(event, pix_params)" );
+element.setAttributeNS(null, 'onmouseout', "clearCoor()" );
+
+</script>
+
+</body>
+</html>
