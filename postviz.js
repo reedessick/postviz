@@ -357,58 +357,54 @@ function render_zoom( ang, pix_params ) {
 	var pixarea = 4*Math.PI / npix ;
 	var angres = Math.pow( pixarea, 0.5 ); 
 
-	var radius = zoom_radius * angres
-
-	if (radius < Math.PI/18) {
-		raidus = Math.PI/18 ;
-	}
+	var radius = Math.max( Math.PI/18, zoom_radius * angres )
 
 	// size of dots
 	var dotsize = 0.25 * Math.min(Rx, Ry) / zoom_radius ;
 
         // iterate over pixels
-	var iang;
+	var pixel
+	var pix
 	var new_t;
-	var r;
 	var new_p;
+	var r;
 	var x;
 	var y;
 	var dot;
 	var fill;
 
-        for (var pix = 0 ; pix < npix ; pix ++ ) {
-                iang = hp.pix2ang_ring(nside, pix);
+	var good_pixels = find_good_pixels( nside, t, p, radius );
+	var l = good_pixels.length ;
+	for (var i = 0; i < l ; i++) {
+		pixel = good_pixels[i] ;
+		pix = pixel[0] ;
+		new_t = pixel[1] ;
+		new_p = pixel[2]
 
-		new_t = dtheta( t, p, iang[0], iang[1] ); // angular separation
-		if (new_t <= radius){ // point is close enough to plot!
-			r = new_t / radius ;
+                // compute_positions
+		r = new_t / radius ;
+                x = cx + r*Rx*new_p[1] ;
+                y = cy + r*Ry*new_p[0] ;
+        
+                dot = document.createElementNS(svgns, 'circle') ;
+                dot.setAttributeNS(null, 'id', 'zoom'+pix);
+                dot.setAttributeNS(null, 'cx', x);
+                dot.setAttributeNS(null, 'cy', y);
+                dot.setAttributeNS(null, 'r', dotsize);
 
-			new_p = get_new_p( iang[0], iang[1], t, p, new_t) ;
+                fill =  document.getElementById(pix).getAttributeNS(null, 'fill') ;
+                if (fill != '' ) {
+                        dot.setAttributeNS(null, 'fill', fill );
+                }
+                else {
+                        dot.setAttributeNS(null, 'fill', 'rgb(255,255,255)');
+                }
 
-			// compute new_p
-			x = cx + r*Rx*new_p[1] ;
-			y = cy + r*Ry*new_p[0] ;
-	
-			dot = document.createElementNS(svgns, 'circle') ;
-			dot.setAttributeNS(null, 'id', 'zoom'+pix);
-			dot.setAttributeNS(null, 'cx', x);
-			dot.setAttributeNS(null, 'cy', y);
-			dot.setAttributeNS(null, 'r', dotsize);
+                dot.setAttributeNS(null, 'stroke', 'rgb(100,100,100');
+//              dot.setAttributeNS(null, 'stroke', 'rgb(0,0,0');
 
-			fill =  document.getElementById(pix).getAttributeNS(null, 'fill') ;
-			if (fill != '' ) {
-				dot.setAttributeNS(null, 'fill', fill );
-			}
-			else {
-				dot.setAttributeNS(null, 'fill', 'rgb(255,255,255)');
-			}
-
-			dot.setAttributeNS(null, 'stroke', 'rgb(100,100,100');
-//			dot.setAttributeNS(null, 'stroke', 'rgb(0,0,0');
-
-			zoom.appendChild( dot )
-		}
-        }
+                zoom.appendChild( dot )
+	}
 
         // put cross-hairs on zoom
         // horizontal line
@@ -431,6 +427,46 @@ function render_zoom( ang, pix_params ) {
         line.setAttributeNS(null, 'stroke', 'rgb(0, 0, 0)');
         zoom.appendChild( line );
 
+}
+
+function find_good_pixels( nside, t, p, radius ) {
+
+/*	TODO: fix me! I'm very slow!
+	instead, use a hierarchical search with nested pixel ordering.
+		kept pixels = all pixels with nside=1 // initialization
+		loop nside=1; nside <= actual_nside; nside *=2 
+			iterate through pixels
+			calculate new_t for each pixel, and check whether Math.max(0, new_t - angres) > radius 
+			if so, we keep this pixel -> add all child pixels to an array? recurse and then concatenate?
+			else, we forget about it
+
+	implement this with recursive calls! Then we can simply call this once for each of the 12 initial pixels and concatenate the resulting lists
+	we then have to iterate through a list of nested pixel indecies and transform it into a list of ring pixel indicies...
+
+	we could also just demand that all maps we have are given in the "nest" format, and then use that hash throughout so we don't have to convert back and forth...
+
+	we could also define a global variable determining whether we have ring or nest structures, and then alter the work flow depending on that	
+*/
+
+	var hp = new HEALPix();
+
+	var npix = nside2npix( nside ) ;
+	var iang;
+	var new_t;
+	var new_p;
+	var r;
+	var good_pixels = [];
+
+        for (var pix = 0 ; pix < npix ; pix ++ ) {
+                iang = hp.pix2ang_ring(nside, pix);
+                new_t = dtheta( t, p, iang[0], iang[1] ); // angular separation
+                if (new_t <= radius){ // point is close enough to plot!
+                        new_p = get_new_p( iang[0], iang[1], t, p, new_t) ;
+			good_pixels[good_pixels.length] = [pix, new_t, new_p] ;
+        	}
+	}
+
+	return good_pixels ;
 }
 
 function dtheta( t1, p1, t2, p2) {
