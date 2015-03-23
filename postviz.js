@@ -167,6 +167,8 @@ function create_pixels(pix_params) {
 	var hp = new HEALPix();
 	var npix = nside2npix(nside);
 	var pos_params = {width:width, height:height, projection:projection};
+
+	var fragment = document.createDocumentFragment()
 	for (var pix = 0 ; pix < npix ; pix ++ ) {
 		var iang = hp.pix2ang_ring(nside, pix);
 
@@ -189,8 +191,11 @@ function create_pixels(pix_params) {
 		dot.setAttributeNS(null, 'onmouseenter', 'pixel_mouseenter('+pix+', '+par_id+')' );
 		dot.setAttributeNS(null, 'onmouseleave', 'pixel_mouseleave('+par_id+')' );
 
-		parent.appendChild(dot);
+//		parent.appendChild(dot);
+		fragment.appendChild( dot );
 	}
+
+	parent.appendChild( fragment );
 
 	// draw graticule
 	var linestr = "" ;
@@ -201,6 +206,8 @@ function create_pixels(pix_params) {
 	var dtheta = 30;
 	var x;
 	var y;
+
+	var fragment = document.createDocumentFragment()
 	for (var theta=dtheta; theta <= 180; theta+=dtheta) {
 		pos = pixel_pos( [theta*Math.PI/180, 0], pos_params ); 
 		x = buffer + pos[0];
@@ -217,11 +224,16 @@ function create_pixels(pix_params) {
 		polyline.setAttributeNS(null, 'points', linestr);
 		polyline.setAttributeNS(null, 'stroke', linecolor);
 
-		parent.appendChild( polyline );
+//		parent.appendChild( polyline );
+		fragment.appendChild( polyline );
 	}
+
+	parent.appendChild( fragment );
 
 	var dtheta = 1;
 	var dphi = 45;
+
+	var fragment = document.createDocumentFragment()
 	for (var phi=0; phi <=360; phi+=dphi) {
 		linestr = " " ;
 		for (theta=0 ; theta<=180; theta+=dtheta) {
@@ -238,8 +250,10 @@ function create_pixels(pix_params) {
                 polyline.setAttributeNS(null, 'stroke', linecolor ) ;
                 polyline.setAttributeNS(null, 'fill', 'none' );
 
-                parent.appendChild( polyline );
+//                parent.appendChild( polyline );
+                fragment.appendChild( polyline );
 	}	
+	parent.appendChild( fragment );
 }
 
 function pixel_click(pix) {
@@ -375,6 +389,8 @@ function render_zoom( ang, pix_params ) {
 
 	var good_pixels = find_good_pixels( nside, t, p, radius );
 	var l = good_pixels.length ;
+
+	var fragment = document.createDocumentFragment() ;
 	for (var i = 0; i < l ; i++) {
 		pixel = good_pixels[i] ;
 		pix = pixel[0] ;
@@ -390,7 +406,8 @@ function render_zoom( ang, pix_params ) {
                 dot.setAttributeNS(null, 'id', 'zoom'+pix);
                 dot.setAttributeNS(null, 'cx', x);
                 dot.setAttributeNS(null, 'cy', y);
-                dot.setAttributeNS(null, 'r', dotsize);
+//                dot.setAttributeNS(null, 'r', dotsize );
+		dot.setAttributeNS(null, 'r', dotsize*0.5*(2-Math.pow(r,2)));
 
                 fill =  document.getElementById(pix).getAttributeNS(null, 'fill') ;
                 if (fill != '' ) {
@@ -403,8 +420,11 @@ function render_zoom( ang, pix_params ) {
                 dot.setAttributeNS(null, 'stroke', 'rgb(100,100,100');
 //              dot.setAttributeNS(null, 'stroke', 'rgb(0,0,0');
 
-                zoom.appendChild( dot )
+                fragment.appendChild( dot ) ;
+//                zoom.appendChild( dot ) ;
 	}
+
+	zoom.appendChild( fragment ) ;
 
         // put cross-hairs on zoom
         // horizontal line
