@@ -431,23 +431,19 @@ function render_zoom( ang, pix_params ) {
 
 function find_good_pixels( nside, t, p, radius ) {
 
-/*	TODO: fix me! I'm very slow!
-	instead, use a hierarchical search with nested pixel ordering.
-		kept pixels = all pixels with nside=1 // initialization
-		loop nside=1; nside <= actual_nside; nside *=2 
-			iterate through pixels
-			calculate new_t for each pixel, and check whether Math.max(0, new_t - angres) > radius 
-			if so, we keep this pixel -> add all child pixels to an array? recurse and then concatenate?
-			else, we forget about it
+	var good_pixels = good_children( t, p, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], radius, 1, nside ) ;
 
-	implement this with recursive calls! Then we can simply call this once for each of the 12 initial pixels and concatenate the resulting lists
-	we then have to iterate through a list of nested pixel indecies and transform it into a list of ring pixel indicies...
+	// convert from nest -> ring... we may want to get rid of this later...
+	var hp = new HEALPix();
+	var great_pixels = [] ;
+	var l = good_pixels.length ;
+	for (var pix=0; pix < l ; pix++ ) {
+		great_pixels[great_pixels.length] = [hp.nest2ring(nside, good_pixels[pix][0]), good_pixels[pix][1], good_pixels[pix][2] ] ;
+	}
 
-	we could also just demand that all maps we have are given in the "nest" format, and then use that hash throughout so we don't have to convert back and forth...
-
-	we could also define a global variable determining whether we have ring or nest structures, and then alter the work flow depending on that	
-*/
-
+	return great_pixels ;
+		
+/*
 	var hp = new HEALPix();
 
 	var npix = nside2npix( nside ) ;
@@ -467,7 +463,48 @@ function find_good_pixels( nside, t, p, radius ) {
 	}
 
 	return good_pixels ;
+*/
 }
+
+function good_children( t, p, pix, radius, nside, max_nside ) {
+
+	var hp = new HEALPix();
+	var l = pix.length ; 
+	var ans = [] ;
+
+	if (nside == max_nside) { // simply do a direct search over the remaining pixels
+
+		for (var i=0; i < l ; i++ ) {
+			var pixind = pix[i] ;
+			var iang = hp.pix2ang_nest(nside, pixind) ;
+			var new_t = dtheta( t, p, iang[0], iang[1]) ;
+
+			if (new_t <= radius) {
+				var new_p = get_new_p( iang[0], iang[1], t, p, new_t );
+				ans[ans.length] = [pixind, new_t, new_p] ;
+			}
+		}
+		return ans ;
+	}
+	else { // hierarchical search
+		var angres = Math.pow( 4*Math.PI/nside2npix(nside),  0.5 );
+
+		for (var i=0; i < l; i++ ) {
+			var pixind = pix[i] ;
+			var iang = hp.pix2ang_nest(nside, pixind) ;
+			var new_t = dtheta( t, p, iang[0], iang[1]) ;
+
+			if (Math.max(new_t - angres, 0) <= radius) {
+				var new_pixind = pixind*4 ;
+				ans = ans.concat( good_children( t, p, [new_pixind, new_pixind+1, new_pixind+2, new_pixind+3], radius, 2*nside, max_nside ) );
+			}
+		}
+
+		return ans ;
+	}
+
+}
+
 
 function dtheta( t1, p1, t2, p2) {
 	cosdtheta = Math.cos(t1)*Math.cos(t2) + Math.sin(t1)*Math.sin(t2)*Math.cos(p1-p2) ;
@@ -488,12 +525,12 @@ function get_new_p( t, p, to, po, cosTheta) {
 
 function fillin_pixels() {
 
-	npix = sample.length ;
+	var npix = sample.length ;
 
 	var color;
 	var p;
 	for (var pix = 0; pix < npix ; pix++) {
-		p = sample[pix] ;
+		var p = sample[pix] ;
 		if (p == 0) {
 			color = 'rgb(255, 255, 255)' ;
 		}
@@ -502,7 +539,7 @@ function fillin_pixels() {
 			color = 'rgb(255,'+color+',255)' ;
 		}
 
-		dot = document.getElementById(pix) ; 
+		var dot = document.getElementById(pix) ; 
 		dot.setAttributeNS(null, 'fill', color) ;
 		dot.setAttributeNS(null, 'stroke', color) ;
 //		dot.setAttributeNS(null, 'stroke', 'rgb(0, 0, 0)') ;
