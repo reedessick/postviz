@@ -62,9 +62,22 @@ var pix_params = { nside:nside, buffer:buffer, parent_id:"svgskymap",
 create_pixels(pix_params);
 
 // set up zoom map
+var timer;
+var timeout = 50;
+var mouseevent;
 element =  document.getElementById('svgskymap') ;
-element.setAttributeNS(null, 'onmousemove', "update_zoom(event, pix_params)" );
+element.setAttributeNS(null, 'onmousemove', "foobar(event)" );
 element.setAttributeNS(null, 'onmouseout', "clearCoor()" );
+
+function foobar(event) {
+	clearTimeout(timer);
+	mouseevent = event ; // make this global
+	timer = setTimeout(nothin, timeout);
+}
+
+function nothin() {
+	update_zoom(mouseevent, pix_params);
+}
 
 // color pixels
 fillin_pixels(); // uses the global variable "sample" to determine colors!
