@@ -8,8 +8,9 @@
 
 <body>
 	<p id='skymap'>
-		<svg id="svgskymap" xmlns=svgns width="800" height="480" > </svg>
-		<svg id="svgzoom" xmlns=svgns width="480" height="480"> </svg>
+		<svg id="svgskymap" xmlns=svgns width="600" height="400" > </svg>
+		<svg id="svgzoom" xmlns=svgns width="400" height="400"> </svg>
+        	<img id="pix-fig" width="400" height="400" alt="click on a pixel to see a posterior!" src="" />
 	</p>
 
 	<p id='par1'>
@@ -63,7 +64,7 @@ create_pixels(pix_params);
 
 // set up zoom map
 var timer;
-var timeout = 50;
+var timeout = 10;
 var mouseevent;
 element =  document.getElementById('svgskymap') ;
 element.setAttributeNS(null, 'onmousemove', "foobar(event)" );

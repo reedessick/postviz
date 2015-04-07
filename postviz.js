@@ -261,8 +261,17 @@ function pixel_click(pix) {
 	var zoom_element = document.getElementById('zoom'+pix) ;
 
 	var fill = element.getAttributeNS(null, 'fill');
+	var stroke = element.getAttributeNS(null, 'stroke');
+
+	/***************************************************************
+	only support a single pixel being selected! 
+	we re-color all pixels (slow, but gets the job done...)
+	***************************************************************/
+	fillin_pixels() ;
+	var img = document.getElementById('pix-fig') ;
 
 	switch(fill) {
+/*
 		case "rgb(0, 0, 255)":
 			element.setAttributeNS(null, 'fill', 'rgb(255, 0, 0)') ;
 			zoom_element.setAttributeNS(null, 'fill', 'rgb(255, 0, 0)' );
@@ -278,9 +287,42 @@ function pixel_click(pix) {
 		default:
 			element.setAttributeNS(null, 'fill', 'rgb(255, 0, 0)') ;
 			zoom_element.setAttributeNS(null, 'fill', 'rgb(255, 0, 0)') ;
+			break ;
+*/
+		case "rgb(0, 0, 0)": // deselect this pixel
+
+			console.log( 'deselect '+pix ) ;
+
+			var p = sample[pix] ;
+			var color ;
+	                if (p == 0) {
+        	                color = 'rgb(255, 255, 255)' ;
+                	}
+	                else {
+        	                color = Math.ceil( 255 *(1 -  Math.pow( p/max, 0.5 ) ) ) ;
+                	        color = 'rgb(255,'+color+',255)' ;
+	                }
+			element.setAttributeNS(null, 'fill', color) ;
+			element.setAttributeNS(null, 'stroke', color) ;
+			zoom_element.setAttributeNS(null, 'fill', color) ;
+
+                        img.setAttributeNS(null, 'src', '' );
+
+			break ;
+		default: // select this pixel
+
+			console.log( 'select '+pix ) ;
+
+			element.setAttributeNS(null, 'fill', 'rgb(0, 0, 0)') ;
+			element.setAttributeNS(null, 'stroke', 'rgb(0, 0, 0)') ;
+			zoom_element.setAttributeNS(null, 'fill', 'rgb(0, 0, 0)') ;
+
+                        img.setAttributeNS(null, 'src', 'figures/'+pix+'.png') ;
+			break ;
 	}
 
-	switch(element.style.stroke) {
+/*
+	switch(stroke) {
 		case fill:
 			element.setAttributeNS(null, 'stroke','rgb(0, 0, 0)') ;
 //			zoom_element.setAttributeNS(null, 'stroke','rgb(0, 0, 0)') ;
@@ -290,6 +332,10 @@ function pixel_click(pix) {
 			element.setAttributeNS(null, 'stroke', new_fill)  ;
 //			zoom_element.setAttributeNS(null, 'stroke', new_fill)  ;
 	}
+*/
+
+	render_zoom( zoom_ang, pix_params ) ;
+
 }		
 
 function pixel_mouseenter( pix, par_element ) {
@@ -342,8 +388,10 @@ function clearCoor() {
 }
 
 function render_zoom( ang, pix_params ) {
-	t = ang[0];
-	p = ang[1];
+        zoom_ang = ang ; // global variable, intentional! Used within pixel_click
+
+	var t = ang[0];
+	var p = ang[1];
 
 	// parser pix_params
 	var zoom_id = pix_params.zoom_id || 'svgzoom' ;
