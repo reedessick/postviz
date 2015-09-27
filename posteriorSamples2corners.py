@@ -5,6 +5,8 @@ author = "Reed Essick (reed.essick@ligo.org)"
 import healpy as hp
 import numpy as np
 
+import os
+
 import matplotlib
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
@@ -16,8 +18,13 @@ from optparse import OptionParser
 
 pi_2 = np.pi * 0.5
 
-plotparams = 'loghrss quality frequency polar_exccentricity alpha time ra dec'.split()
+plotparams = 'loghrss quality frequency polar_eccentricity alpha time ra dec'.split()
 labels = ["$\log h_{rss}$", "$q$", "$f$", "$\epsilon$", "$\\alpha$", "$t_{geocent}$", "$RA$", "$Dec$"]
+
+plotparams = 'loghrss quality frequency time'.split()
+labels = ["$\log h_{rss}$", "$q$", "$f$", "$t_{geocent}$"]
+
+Ndim = len(plotparams)
 
 #=================================================
 
@@ -35,8 +42,11 @@ if len(args) != 1:
     raise ValueError("please supply exactly one input argument")
 postsamples_file = args[0]
 
-if opts.nside%2:
-    raise ValueError("--nside must be a multiple of 2")
+if np.log(opts.nside)%np.log(2):
+    raise ValueError("--nside must be a power of 2")
+
+if not os.path.exists(opts.output_dir):
+    os.makedirs(opts.output_dir)
 
 #=================================================
 
@@ -53,15 +63,23 @@ for line in postsamples_obj:
     postsamples.append( dict( zip( cols, [float(l) for l in line.strip().split()] ) ) )
 postsamples_obj.close()
 
+Nsmp = len(postsamples)
+
+if "time" in plotparams:
+    mtime = np.mean( [sample['time'] for sample in postsamples] )
+    for sample in postsamples:
+        sample['time'] -= mtime
+
 #=================================================
 
 npix = hp.nside2npix( opts.nside )
 if opts.verbose:
     print "binning by pixel : nside = %d -> npix = %d"%(opts.nside, npix)
-pixpostsamples = [ []*npix ]
+pixpostsamples = [ [] for pix in xrange(npix) ]
 for sample in postsamples:
     theta = pi_2 - sample['dec']
     phi = sample['ra']
+
     pixpostsamples[ hp.ang2pix( opts.nside, theta, phi ) ].append( sample )
 
 #=================================================
@@ -73,20 +91,48 @@ if opts.verbose:
 
 for pix in xrange( npix ):
     samples = pixpostsamples[pix]
+    nsmp = len(samples)
 
-    data = np.array( [ [sample[c] for c in plotparams ] for sample in samples ] )
+    if nsmp > Ndim:
 
-    fig = corner.corner( data, 
-                         labels = labels, 
-                         truths = [0.0, 0.0, 0.0], 
-                         quantiles = [0.10, 0.50, 0.90], 
-                         show_titles = True, 
-                         title_args = {"fontsize":12} 
-                       )
+        data = np.array( [ [sample[c] for c in plotparams ] for sample in samples ] )
 
-    figname = "%s/%d.png"%(opts.output_dir, pix)
+        fig = corner.corner( data, 
+                             labels = labels, 
+                             truths = [0.0]*Ndim, 
+                             quantiles = [0.10, 0.50, 0.90], 
+                             show_titles = True, 
+                             title_args = {"fontsize":12} 
+                           )
+  
+        fig.text( 0.9, 0.9, "%d / %d = %.3f"%(nsmp, Nsmp, 1.0*nsmp/Nsmp) , ha='center', va='center' )
+
+    else:
+        fig = plt.figure()
+        fig.text( 0.9, 0.9, "%d / %d = %.3f"%(nsmp, Nsmp, 1.0*nsmp/Nsmp) , ha='center', va='center' )
+        
+    figname = "%s/nside-%d-%d.png"%(opts.output_dir, opts.nside, pix)
     if opts.verbose:
         print figname
     fig.savefig( figname )
     plt.close( fig )
+    
+if opts.verbose:
+    print "generating corner plot for the entire sample distribution"
+    data = np.array( [ [sample[c] for c in plotparams ] for sample in postsamples ] )
 
+    fig = corner.corner( data,
+                         labels = labels,
+                         truths = [0.0]*Ndim,
+                         quantiles = [0.10, 0.50, 0.90],
+                         show_titles = True,
+                         title_args = {"fontsize":12}
+                       )
+
+#    fig.text( 0.9, 0.9, "%d / %d = %.3f"%(Nsmp, Nsmp, 1.0*Nsmp/Nsmp) , ha='center', va='center' )
+
+    figname = "%s/nside-%d.png"%(opts.output_dir, opts.nside)
+    if opts.verbose:
+        print figname
+    fig.savefig( figname )
+    plt.close( fig )
