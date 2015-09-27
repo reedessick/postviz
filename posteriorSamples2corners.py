@@ -42,7 +42,7 @@ if len(args) != 1:
     raise ValueError("please supply exactly one input argument")
 postsamples_file = args[0]
 
-if np.log(opts.nside)%np.log(2):
+if not hp.isnsideok( opts.nside ):
     raise ValueError("--nside must be a power of 2")
 
 if not os.path.exists(opts.output_dir):
