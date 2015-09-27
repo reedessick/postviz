@@ -60,15 +60,30 @@ for sample in postsamples:
 
 #=================================================
 
+plotparams = 'loghrss quality frequency polar_exccentricity alpha time ra dec'.split()
+labels = ["$\log h_{rss}$", "$q$", "$f$", "$\epsilon$", "$\\alpha$", "$t_{geocent}$", "$RA$", "$Dec$"]
+
 if opts.verbose:
-    print "generating corner plots"
+    print "generating corner plots:"
+    for c in plotparams:
+        print "\t", c
+
 for pix in xrange( npix ):
     samples = pixpostsamples[pix]
 
-    raise StandardError("WRITE CORNER PLOTTING")
-    """
-    only plot intrinsic parameters?
-    plot everything except RA,Dec?
-    """
+    data = np.array( [ [sample[c] for c in plotparams ] for sample in samples ] )
 
+    fig = corner.corner( data, 
+                         labels = labels, 
+                         truths = [0.0, 0.0, 0.0], 
+                         quantiles = [0.10, 0.50, 0.90], 
+                         show_titles = True, 
+                         title_args = {"fontsize":12} 
+                       )
+
+    figname = "%s/%d.png"%(opts.output_dir, pix)
+    if opts.verbose:
+        print figname
+    fig.savefig( figname )
+    plt.close( fig )
 
