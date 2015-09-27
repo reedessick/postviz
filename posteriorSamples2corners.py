@@ -16,6 +16,9 @@ from optparse import OptionParser
 
 pi_2 = np.pi * 0.5
 
+plotparams = 'loghrss quality frequency polar_exccentricity alpha time ra dec'.split()
+labels = ["$\log h_{rss}$", "$q$", "$f$", "$\epsilon$", "$\\alpha$", "$t_{geocent}$", "$RA$", "$Dec$"]
+
 #=================================================
 
 parser = OptionParser( description=description, usage=usage )
@@ -43,6 +46,9 @@ if opts.verbose:
 postsamples = []
 postsamples_obj = open( postsamples_file, "r" )
 cols = postsamples_obj.readline().strip().split() ### assumes first line is column names
+for c in plotparams:
+    if c not in cols:
+        raise ValueError( "could find column %s in %s"%(c, postsamples_file) )
 for line in postsamples_obj:
     postsamples.append( dict( zip( cols, [float(l) for l in line.strip().split()] ) ) )
 postsamples_obj.close()
@@ -59,9 +65,6 @@ for sample in postsamples:
     pixpostsamples[ hp.ang2pix( opts.nside, theta, phi ) ].append( sample )
 
 #=================================================
-
-plotparams = 'loghrss quality frequency polar_exccentricity alpha time ra dec'.split()
-labels = ["$\log h_{rss}$", "$q$", "$f$", "$\epsilon$", "$\\alpha$", "$t_{geocent}$", "$RA$", "$Dec$"]
 
 if opts.verbose:
     print "generating corner plots:"
