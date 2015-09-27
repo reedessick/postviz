@@ -306,7 +306,7 @@ function pixel_click(pix) {
 			element.setAttributeNS(null, 'stroke', color) ;
 			zoom_element.setAttributeNS(null, 'fill', color) ;
 
-                        img.setAttributeNS(null, 'src', '' );
+                        img.setAttributeNS(null, 'src', 'figures/allsky.png' );
 
 			break ;
 		default: // select this pixel

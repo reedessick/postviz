@@ -105,13 +105,15 @@ for pix in xrange( npix ):
                              title_args = {"fontsize":12} 
                            )
   
-        fig.text( 0.9, 0.9, "%d / %d = %.3f"%(nsmp, Nsmp, 1.0*nsmp/Nsmp) , ha='center', va='center' )
+        fig.text( 0.9, 0.9, "pix %d"%(pix) , ha='center', va='center' )
+        fig.text( 0.9, 0.8, "%d / %d = %.3f"%(nsmp, Nsmp, 1.0*nsmp/Nsmp) , ha='center', va='center' )
 
     else:
         fig = plt.figure()
-        fig.text( 0.9, 0.9, "%d / %d = %.3f"%(nsmp, Nsmp, 1.0*nsmp/Nsmp) , ha='center', va='center' )
+        fig.text( 0.9, 0.9, "pix %d"%(pix) , ha='center', va='center' )
+        fig.text( 0.9, 0.8, "%d / %d = %.3f"%(nsmp, Nsmp, 1.0*nsmp/Nsmp) , ha='center', va='center' )
         
-    figname = "%s/nside-%d-%d.png"%(opts.output_dir, opts.nside, pix)
+    figname = "%s/%d.png"%(opts.output_dir, pix)
     if opts.verbose:
         print figname
     fig.savefig( figname )
@@ -131,7 +133,7 @@ if opts.verbose:
 
 #    fig.text( 0.9, 0.9, "%d / %d = %.3f"%(Nsmp, Nsmp, 1.0*Nsmp/Nsmp) , ha='center', va='center' )
 
-    figname = "%s/nside-%d.png"%(opts.output_dir, opts.nside)
+    figname = "%s/allsky.png"%(opts.output_dir)
     if opts.verbose:
         print figname
     fig.savefig( figname )
