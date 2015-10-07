@@ -18,11 +18,27 @@ from optparse import OptionParser
 
 pi_2 = np.pi * 0.5
 
-plotparams = 'loghrss quality frequency polar_eccentricity alpha time ra dec'.split()
-labels = ["$\log h_{rss}$", "$q$", "$f$", "$\epsilon$", "$\\alpha$", "$t_{geocent}$", "$RA$", "$Dec$"]
+#=================================================
+# LIB
+#=================================================
+
+#plotparams = 'loghrss quality frequency polar_eccentricity alpha time ra dec'.split()
+#labels = ["$\log h_{rss}$", "$q$", "$f$", "$\epsilon$", "$\\alpha$", "$t_{geocent}$", "$RA$", "$Dec$"]
 
 plotparams = 'loghrss quality frequency time'.split()
 labels = ["$\log h_{rss}$", "$q$", "$f$", "$t_{geocent}$"]
+
+#=================================================
+# LALInference
+#=================================================
+
+#plotparams = "mtotal chi m1 ra m2 psi costheta_jn a1 a2 distance mc phi_orb q eta time dec".split()
+#labels = ["$M_{T}$", "$\xi$", "$m_{1}$", "$RA$", "$m_{2}$", "$\psi$", "$\cos\\theta_{jn}$", "$a_{1}$", "$a_{2}$", "$D$", "$M_{c}$", "$\phi_{orb}$", "$q$", "$\eta$", "$t_{geocent}$", "$Dec$"]
+
+#plotparams = "a1 a2 distance costheta_jn mc eta time".split()
+#labels = ["$a_{1}$", "$a_{2}$", "$D$", "$\cos\\theta_{jn}$", "$M_{c}$", "$\eta$", "$t_{geocent}$"]
+
+#=================================================
 
 Ndim = len(plotparams)
 
@@ -121,20 +137,20 @@ for pix in xrange( npix ):
     
 if opts.verbose:
     print "generating corner plot for the entire sample distribution"
-    data = np.array( [ [sample[c] for c in plotparams ] for sample in postsamples ] )
+data = np.array( [ [sample[c] for c in plotparams ] for sample in postsamples ] )
 
-    fig = corner.corner( data,
-                         labels = labels,
-                         truths = [0.0]*Ndim,
-                         quantiles = [0.10, 0.50, 0.90],
-                         show_titles = True,
-                         title_args = {"fontsize":12}
-                       )
+fig = corner.corner( data,
+                     labels = labels,
+                     truths = [0.0]*Ndim,
+                     quantiles = [0.10, 0.50, 0.90],
+                     show_titles = True,
+                     title_args = {"fontsize":12}
+                   )
 
 #    fig.text( 0.9, 0.9, "%d / %d = %.3f"%(Nsmp, Nsmp, 1.0*Nsmp/Nsmp) , ha='center', va='center' )
 
-    figname = "%s/allsky.png"%(opts.output_dir)
-    if opts.verbose:
-        print figname
-    fig.savefig( figname )
-    plt.close( fig )
+figname = "%s/allsky.png"%(opts.output_dir)
+if opts.verbose:
+    print figname
+fig.savefig( figname )
+plt.close( fig )
