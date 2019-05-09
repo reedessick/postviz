@@ -35,8 +35,8 @@ labels = ["$\log h_{rss}$", "$q$", "$f$", "$t_{geocent}$"]
 #plotparams = "mtotal chi m1 ra m2 psi costheta_jn a1 a2 distance mc phi_orb q eta time dec".split()
 #labels = ["$M_{T}$", "$\xi$", "$m_{1}$", "$RA$", "$m_{2}$", "$\psi$", "$\cos\\theta_{jn}$", "$a_{1}$", "$a_{2}$", "$D$", "$M_{c}$", "$\phi_{orb}$", "$q$", "$\eta$", "$t_{geocent}$", "$Dec$"]
 
-#plotparams = "a1 a2 distance costheta_jn mc eta time".split()
-#labels = ["$a_{1}$", "$a_{2}$", "$D$", "$\cos\\theta_{jn}$", "$M_{c}$", "$\eta$", "$t_{geocent}$"]
+plotparams = "a1z a2z dist costheta_jn mc m1 m2 q lambda1 lambda2 time".split()
+labels = ["$a_{1,z}$", "$a_{2,z}$", "$D_L$", "$\cos\\theta_{jn}$", "$\mathcal{M}$", "$m_1$" , "$m_2$", "$q$", "$\Lambda_1$", "$\Lambda_2$", "$t_\mathrm{geo}$"]
 
 #=================================================
 
@@ -115,10 +115,6 @@ for pix in xrange( npix ):
 
         fig = corner.corner( data, 
                              labels = labels, 
-                             truths = [0.0]*Ndim, 
-                             quantiles = [0.10, 0.50, 0.90], 
-                             show_titles = True, 
-                             title_args = {"fontsize":12} 
                            )
   
         fig.text( 0.9, 0.9, "pix %d"%(pix) , ha='center', va='center' )
@@ -141,10 +137,6 @@ data = np.array( [ [sample[c] for c in plotparams ] for sample in postsamples ] 
 
 fig = corner.corner( data,
                      labels = labels,
-                     truths = [0.0]*Ndim,
-                     quantiles = [0.10, 0.50, 0.90],
-                     show_titles = True,
-                     title_args = {"fontsize":12}
                    )
 
 #    fig.text( 0.9, 0.9, "%d / %d = %.3f"%(Nsmp, Nsmp, 1.0*Nsmp/Nsmp) , ha='center', va='center' )

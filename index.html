@@ -48,9 +48,9 @@ var twobuffer = 2*buffer
 
 // figure out radius of dots in svgskymap
 //var r = 2;
-var width = document.getElementById('svgskymap').width - twobuffer ;
-var height = document.getElementById('svgskymap').height - twobuffer ;
-var r = 4*Math.min(width*0.5*angres/Math.PI, height*angres/Math.PI) ; // magic numbers come from width, height of svgskymap
+var width = document.getElementById('svgskymap').getAttribute('width') - twobuffer ;
+var height = document.getElementById('svgskymap').getAttribute('height') - twobuffer ;
+var r = 0.5*Math.min(width*0.5*angres/Math.PI, height*angres/Math.PI) ; // magic numbers come from width, height of svgskymap
 
 /*
 var pix_params = { nside:nside, buffer:buffer, parent_id:"svgskymap", 
